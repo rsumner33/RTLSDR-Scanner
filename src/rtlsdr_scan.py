@@ -780,6 +780,7 @@ class FrameMain(wx.Frame):
         self.menuStart = None
         self.menuStop = None
         self.menuPref = None
+        self.menuCompare = None
         self.menuCal = None
 
         self.panel = None
@@ -925,6 +926,7 @@ class FrameMain(wx.Frame):
                                    "Preferences")
 
         menuTools = wx.Menu()
+        self.menuCompare = menuTools.Append(wx.ID_ANY, "&Compare...", "Compare plots")
         self.menuCal = menuTools.Append(wx.ID_ANY, "&Auto Calibration...",
                                "Automatically calibrate to a known frequency")
 
@@ -947,6 +949,7 @@ class FrameMain(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_start, self.menuStart)
         self.Bind(wx.EVT_MENU, self.on_stop, self.menuStop)
         self.Bind(wx.EVT_MENU, self.on_pref, self.menuPref)
+        self.Bind(wx.EVT_MENU, self.on_compare, self.menuCompare)
         self.Bind(wx.EVT_MENU, self.on_cal, self.menuCal)
         self.Bind(wx.EVT_MENU, self.on_about, menuAbout)
 
@@ -1009,6 +1012,11 @@ class FrameMain(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.devices = dlg.get_devices()
             self.settings.index = dlg.get_index()
+        dlg.Destroy()
+
+    def on_compare(self, _event):
+        dlg = DialogCompare(self, self.dirname, self.filename)
+        dlg.ShowModal()
         dlg.Destroy()
 
     def on_cal(self, _event):
@@ -1092,28 +1100,19 @@ class FrameMain(wx.Frame):
         self.filename = filename
         self.dirname = dirname
         self.status.SetStatusText("Opening: {0}".format(filename), 0)
-        try:
-            handle = open(os.path.join(dirname, filename), 'rb')
-            header = cPickle.load(handle)
-            if header != FILE_HEADER:
-                wx.MessageBox('Invalid or corrupted file', 'Warning',
-                          wx.OK | wx.ICON_WARNING)
-                self.status.SetStatusText("Open failed", 0)
-                return
-            _version = cPickle.load(handle)
-            self.settings.start = cPickle.load(handle)
-            self.settings.stop = cPickle.load(handle)
-            self.spectrum = cPickle.load(handle)
-        except:
-            wx.MessageBox('File could not be opened', 'Warning',
-                          wx.OK | wx.ICON_WARNING)
+
+        start, stop, spectrum = open_plot(dirname, filename)
+
+        if len(spectrum) > 0:
+            self.settings.start = start
+            self.settings.stop = stop
+            self.spectrum = spectrum
+            self.isSaved = True
+            self.set_range()
+            self.draw_plot()
+            self.status.SetStatusText("Finished", 0)
+        else:
             self.status.SetStatusText("Open failed", 0)
-            return
-        self.isSaved = True
-        self.set_range()
-        self.draw_plot()
-        handle.close()
-        self.status.SetStatusText("Finished", 0)
 
     def auto_cal(self, status):
         freq = self.dlgCal.get_freq()
@@ -1213,9 +1212,7 @@ class FrameMain(wx.Frame):
     def draw_plot(self):
         axes = self.graph.get_axes()
         if len(self.spectrum) > 0:
-            freqs = self.spectrum.keys()
-            freqs.sort()
-            powers = map(self.spectrum.get, freqs)
+            freqs, powers = split_spectrum(self.spectrum)
             axes.clear()
             axes.set_title("Frequency Scan\n{0} - {1} MHz".format(self.settings.start,
                                                                 self.settings.stop))
@@ -1316,6 +1313,30 @@ def arguments():
 
     return directory, filename
 
+def open_plot(dirname, filename):
+    try:
+        handle = open(os.path.join(dirname, filename), 'rb')
+        header = cPickle.load(handle)
+        if header != FILE_HEADER:
+            wx.MessageBox('Invalid or corrupted file', 'Warning',
+                      wx.OK | wx.ICON_WARNING)
+            return
+        _version = cPickle.load(handle)
+        start = cPickle.load(handle)
+        stop = cPickle.load(handle)
+        spectrum = cPickle.load(handle)
+    except:
+        wx.MessageBox('File could not be opened', 'Warning',
+                      wx.OK | wx.ICON_WARNING)
+
+    return start, stop, spectrum
+
+def split_spectrum(spectrum):
+    freqs = spectrum.keys()
+    freqs.sort()
+    powers = map(spectrum.get, freqs)
+
+    return freqs, powers
 
 if __name__ == '__main__':
     app = wx.App(False)
