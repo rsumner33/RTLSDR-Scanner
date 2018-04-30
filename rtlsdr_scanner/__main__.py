@@ -37,34 +37,7 @@ try:
     import wx  # @UnusedImport
 except ImportError as error:
     print 'Import error: {}'.format(error)
-    input('\nError importing libraries\nPress [Return] to exit')
-    exit(1)
-
-import argparse
-import os.path
-import signal
-import sys
-
-from rtlsdr_scanner.cli import Cli
-from rtlsdr_scanner.constants import APP_NAME
-from rtlsdr_scanner.file import File
-from rtlsdr_scanner.main_window import FrameMain, RtlSdrScanner
-
-if not hasattr(sys, 'frozen'):
-    try:
-        import visvis as vv
-        vv.use('wx')
-    except ImportError:
-        pass
-
-
-def __init_worker():
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-
-def __arguments():
-    parser = argparse.ArgumentParser(prog="rtlsdr_scan.py",
-                                     description='''
+    importing
                                         Scan a range of frequencies and
                                         save the results to a file''')
     parser.add_argument("-s", "--start", help="Start frequency (MHz)",

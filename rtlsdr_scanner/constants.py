@@ -27,6 +27,7 @@ import numpy
 
 
 APP_NAME = 'RTLSDR Scanner'
+VERSION = [1, 1, 0]
 
 F_MIN = 0
 F_MAX = 9999
