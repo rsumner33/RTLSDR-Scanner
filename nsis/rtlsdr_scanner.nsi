@@ -404,6 +404,7 @@ Function install_pip
 	${EndIf}
 FunctionEnd
 
+
 Function install_rtlsdr_scanner
     StrCpy $UriFile "rtlsdr-scanner"
     Call install_pip
