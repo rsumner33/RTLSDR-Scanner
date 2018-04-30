@@ -4,6 +4,8 @@ Copyright 2012 - 2015 Al Brown
 
 al [at] eartoearoak.com
 
+al [at] eartoearoak.com
+
 
 A cross platform Python frequency scanning GUI for the OsmoSDR rtl-sdr [library](http://sdr.osmocom.org/trac/wiki/rtl-sdr).
 
